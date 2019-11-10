@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 
 const Communities = mongoose.model('Communities',new mongoose.Schema({
+    
+    _id:mongoose.Types.ObjectId,
+
     C_location: {
         type : String,
         required: true        
