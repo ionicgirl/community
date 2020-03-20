@@ -1,49 +1,145 @@
+const _ = require('lodash');
 const express = require('express');
 const router = express.Router();
-const {Users,Validate,pwd} = require('../modules/users');
+const {Users,pwd} = require('../modules/users');
+// const bcrypt = require('bcrypt');
+
 
 // singup page
 router.post('/signup',async (req,res)=>{
-    // const {error} = await Validate(req.body);
-    // if(error) return res.status(400).send(error.details[0].message)
-    let user = new Users({
-        // id:user.lenght + 1,
-        f_name:req.body.f_name,
-        l_name:req.body.l_name,
-        emailid: req.body.emailid,
-        password:req.body.password,
-    });
-    user = await user.save();
-    res.send(user);
+    console.log(req.body.color);  
+
+    Users.findOne({emailid:req.body.emailid})
+    .exec()
+    .then(result=>{
+        if(result){
+            console.log(result);            
+           return res.status(409).json({error:{message:'User already exist!!!'}})
+        }
+     })
+     .then(ress=>{
+        let user = new Users({
+            // id:user.lenght + 1,
+            f_name:req.body.f_name,
+            l_name:req.body.l_name,
+            emailid: req.body.emailid,
+            color:{
+                color_0 :req.body.color.color_0,
+                color_1 :req.body.color.color_1,
+                color_2 :req.body.color.color_2,
+                color_3 :req.body.color.color_3,
+                color_4 :req.body.color.color_4,
+                color_5 :req.body.color.color_5,
+            }
+         });
+        user.save();
+        // res.send(ress);
+        // bres.send('user created successfully');
+    })
+    .then(()=>{
+        res.status(200).json({
+            message:'User created successfully..',
+        })
+    })
+    .catch(err => {
+        res.status(500).json({
+            error: err
+        })
+    });       
+    // const salt = await bcrypt.genSalt(10);
+    // user.password = await bcrypt.hash(user.password,salt);
+  
 });
 
 // get all user
-router.get('/',async (req,res)=>{
-    const users = await Users.find();
-    res.send(users);
+router.post('/',async (req,res)=>{
+    await Users.find()
+    .exec()
+    .then(result=>{
+        res.status(200).send(result);
+    })
+    .catch(err=>{
+        res.status(500).json({
+            error : err
+        })
+    });
+    
 });
 
 // login page
-router.get('/login',async (req,res)=>{
-    const user = await Users.findOne({emailid:{$eq:req.body.emailid}});
-    if(!user) return res.status(404).send('user not present');
-    else res.status(200).send(user);
+router.post('/login',async (req,res)=>{
+    const result = await Users.findOne({emailid:{$eq:req.body.emailid}})
+    .exec()
+    .then(result=>{
+        var colors = result;
+        // console.log(colors.color);
+        const otp = pwd(colors.color);
+        Users.updateOne({emailid:req.body.emailid},{$set:{OTP:otp}}).exec();
+        console.log(result);        
+         res.status(200).json({
+            message: result,
+            O_T_P: otp
+        });
+    })
+    .catch(err=>{
+        res.status(500).json({
+            message : 'user not found',
+            error : err
+        })
+    });
+   
 });
 
 // update user
-router.put('/:id',async(req,res)=>{
-    const user = await Users.findByIdAndUpdate(req.params.id,{emailid:req.body.emailid},{new:true});
-    if(!user) return res.status(404).send('the user with given id not found....');
+router.patch('/:id',async(req,res)=>{
+    const id = req.params.id;
+    const updateOps = {};
+    for(const ops of req.body){
+        updateOps[ops.propName] = ops.value;
+    }
+    const user = await Users.update({_id:id},{$set : updateOps})
+    .exec()
+    .then(result=>{
+        // console.log(result);
+        res.status(202).send(result);        
+    }).catch(error=>{
+        // console.log(error);
+        res.status(500).json({Error:error});
+    });
+
     res.send(user);
-});
+ });
 
 // delete user
 router.delete('/:id',async(req,res)=>{
-    const user = await Users.findByIdAndRemove(req.params.id);
-    if(!user) return res.status(404).send('the user with given id not found....');
-    res.send(user);
-
+    await Users.findByIdAndRemove(req.params.id)
+    .exec()
+    .then(result=>{
+        res.status(200).send(result)
+    })
+    .catch(err=>{
+        res.status(500).json({
+            error : err
+        })
+    });
+    
 });
+
+// function otp_update(a) {
+//     // const otp = String(a);
+//     // console.log("in function otp",otp);
+    
+//    Users.updateOne({emailid:req.body.emailid},{$set:{OTP:a}})
+//    .exec().then(result=>{
+//         res.status(200).send(result)
+//    })
+//    .catch(err=>{
+//         res.status(500).json({
+//             error : err
+//         })
+//    });
+// } 
+ 
 
 
 

@@ -1,25 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const {Events} = require('../modules/events');
+const {Admin} = require('../modules/Admin');
+const {Users} = require('../modules/Users');
+const {Communities} = require('../modules/communities');
 const mongoose = require('mongoose');
 
 
 router.post('/signup',async (req,res)=>{
-    let event = new Events({
+    let admin = new Admin({
         _id : mongoose.Types.ObjectId(),
-        C_id: req.body.C_id,
-        E_name: req.body.E_name,
-        E_location: req.body.E_location,
-        // E_hostid:req.body.E_host,
-        E_emailid: req.body.E_emailid,
-        // E_details:req.body.E_details,
-        // E_date:req.body.E_date,
-        // E_time:req.body.E_time,
-        // E_contactno:req.body.E_contactno,
-        // E_attendee:req.body.E_attendee,
-        // E_paid:req.body.C_paid
-    });
-    await event.save()
+        communities: req.body.communities,
+        users: req.body.users,
+      });
+    await admin.save()
     .then(result=>{
         res.status(201).send(result)
         // successfully added
@@ -29,9 +22,9 @@ router.post('/signup',async (req,res)=>{
     });      
 });
 
-router.get('/',async (req,res)=>{
-    await Events.find()
-    .populate('C_id')
+router.get('/users',async (req,res)=>{
+    await Users.find()
+    .populate('communitiess')
     .exec()
     .then(result=>{
         res.status(200).send(result)

@@ -6,9 +6,9 @@ const event = require('./routes/event');
 
 const app = express();
 
-mongoose.connect('mongodb://localhost/app')
-    .then(()=>console.log('connection established...'))
-    .catch((err)=>console.error('connection failed..',err));
+mongoose.connect('mongodb://localhost/app', {useNewUrlParser: true , useUnifiedTopology: true})
+    .then(()=>console.log('connection established with DB...'))
+    .catch((err)=>console.error('connection failed with DB..',err));
 
 app.use(express.json()); 
 app.use('/api/users',user);  

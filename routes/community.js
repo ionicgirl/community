@@ -1,74 +1,109 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
+const {Communities,validatecommunity} = require('../modules/communities');
+const {Users} = require('../modules/users');
+const jwt = require('jsonwebtoken')
 // const multer = require('multer');
-const {Communities} = require('../modules/communities');
 // const upload = multer({dest:'uploads/'});
 
 router.post('/signup',async (req,res)=>{
-    bcrypt.hash(req.body.C_password,10,(err,hash)=>{
-        if(err){
-            return res.status(500).json({
-                error: err,
-            })
-        }
-        else{
-            const community = {
+    // const {error} = validatecommunity(req.body);
+    // if (error) return res.status(400).send(error.details[0].massege);
+
+
+    const community = new Communities({
                 C_location:req.body.C_location,
                 C_name:req.body.C_name,
                 C_emailid : req.body.C_emailid,
-                C_description:req.body.C_details,
-                C_head:req.body.C_head,
-                C_interests:[req.body.C_interests],
-                C_password:hash
-            };
-            const result = Community.insertMany(community);
-            res.send(result);
-            // .save()
-            // .then()
-            // .catch(err=>{
-            //     console.log(err);
-            //     res.status(500).json({
-            //         error:err
-            //     })
-                
-            // })
-            // const result = Communities.insertMany(community);
-            // res.send(result);  
+                C_phone : req.body.C_phone,
+                // C_description:req.body.C_description,
+                // C_head:req.body.C_head,
+                // C_interests:[req.body.C_interests],
+                // C_password:req.body.C_password,
+                E_id : [req.body.E_id]
 
-        }
-    })
-    // console.log(req.file);
-    // upload.single('C_profile_image') , 
-      
+            });
+            // const salt = await bcrypt.genSalt(10);
+            // community.C_password = await bcrypt.hash(community.C_password,salt);
+            await community.save()
+            .then(resultt=>{
+                res.status(200).send(resultt);
+            })
+            .catch(error=>{
+                res.status(500).json({Error : error})
+            });
+                    
 });
 
+// router.post('/c_event',async(req,res)=>{
+//     const event = 
+// });
+
+router.post('/attendee',async (req,res)=>{
+    
+    const attendee = await Users.findById(req.body.A_id);
+    if(!attendee) return res.status(404).send('invalid Attendee');    
+
+});
+
+
 router.get('/',async (req,res)=>{
-    let result = await Communities.find();
-    res.send(result);
+    await Communities.find()
+    .populate('E_id')
+    .exec()
+    .then(result=>{
+        res.status(200).json(result)
+    })
+    .catch(err=>{
+        res.status(500).json({
+            Error:err
+        })
+    });
+  
 });
 
 router.get('/login',async (req,res)=>{
-    let community = await Communities.findOne({emailid:req.body.emailid});
-    if(!community) return res.status(404).send(console.log('The user not exists....'));
-    res.send(community);
+    
+    await Communities.findOne({emailid:req.body.emailid})    
+    .exec()
+    .then(result=>{
+        res.status(200).json(result)
+    })
+    .catch(err=>{
+        res.status(500).json({
+            Error:err
+        })
+    });
+    // if(!community) return res.status(404).send(console.log('The user not exists....'));
 });
 
 router.patch('/:id',async(req,res)=>{
-    // const id = req.params.id;
-    const updateOpt = {};
+    const id = req.params.id;
+    const updateOps = {};
     for(const ops of req.body){
-        updateOpt[ops.proname] = ops.value;
+        updateOps[ops.propName] = ops.value;
     }
-    const community = await Communities.findByIdAndUpdate(req.params.id,{C_emailid:req.body.C_emailid});
-    if(!community) return res.status(404).send('user with given id doesnot exist.');
+    const community = await Communities.update({_id:id},{$set : updateOps})
+    .exec()
+    .then(result=>{
+        // console.log(result);
+        res.status(202).send(result);        
+    }).catch(error=>{
+        // console.log(error);
+        res.status(500).json({Error:error});
+    });
+
     res.send(community);
-});
+ });
 
 router.delete('/:id',async(req,res)=>{
-    const community = await Communities.findByIdAndRemove(req.params.id);
-    if(!community) return res.status(404).send('user with given id doesnot exist.');
-    res.send(community);
+    await Communities.findByIdAndRemove(req.params.id)
+    .exec()
+    .then(result=>{res.status(200).send(result)})
+    .catch(error=>{res.status(500).json({Error : error})});
+    // if(!community) return res.status(404).send('user with given id doesnot exist.');
+    // res.send(community);
 })
 
 module.exports = router;
