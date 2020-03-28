@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
-const Events = mongoose.model('Events',new mongoose.Schema({
+
+const EventsSchema = new mongoose.Schema({
     C_id: {
         type :mongoose.Schema.Types.ObjectId,
         ref:'Communities',
@@ -36,11 +37,11 @@ const Events = mongoose.model('Events',new mongoose.Schema({
     //     type:String,
        
     // },
-    // E_attendee:{
-    //     type:[mongoose.Schema.Types.ObjectId],
+    // E_attendee:[{
+    //     type:mongoose.Schema.Types.ObjectId,
         // ref:'Users',
         // default:null
-    // },
+    // }],
     // E_paid:{
     //     type:Boolean,
     //     required:true
@@ -49,6 +50,9 @@ const Events = mongoose.model('Events',new mongoose.Schema({
     //     type:Boolean,
     //     required:true
     // },
-}));
+});
 
+const Events = mongoose.model('Events', EventsSchema);
+
+exports.EventsSchema = EventsSchema;
 exports.Events = Events;

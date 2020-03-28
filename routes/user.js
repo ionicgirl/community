@@ -1,15 +1,14 @@
-const _ = require('lodash');
+// const _ = require('lodash');
 const express = require('express');
 const router = express.Router();
 const {Users,pwd} = require('../modules/users');
-// const bcrypt = require('bcrypt');
-
+const {Communities} = require('../modules/communities');
 
 // singup page
 router.post('/signup',async (req,res)=>{
-    console.log(req.body.color);  
+    // console.log(req.body.color);  
 
-    Users.findOne({emailid:req.body.emailid})
+    await Users.findOne({emailid:req.body.emailid})
     .exec()
     .then(result=>{
         if(result){
@@ -33,8 +32,6 @@ router.post('/signup',async (req,res)=>{
             }
          });
         user.save();
-        // res.send(ress);
-        // bres.send('user created successfully');
     })
     .then(()=>{
         res.status(200).json({
@@ -46,9 +43,7 @@ router.post('/signup',async (req,res)=>{
             error: err
         })
     });       
-    // const salt = await bcrypt.genSalt(10);
-    // user.password = await bcrypt.hash(user.password,salt);
-  
+    
 });
 
 // get all user
@@ -68,7 +63,7 @@ router.post('/',async (req,res)=>{
 
 // login page
 router.post('/login',async (req,res)=>{
-    const result = await Users.findOne({emailid:{$eq:req.body.emailid}})
+    const result = await Users.findOne({_id:{$eq:req.body._id}})
     .exec()
     .then(result=>{
         var colors = result;
@@ -125,22 +120,9 @@ router.delete('/:id',async(req,res)=>{
     
 });
 
-// function otp_update(a) {
-//     // const otp = String(a);
-//     // console.log("in function otp",otp);
-    
-//    Users.updateOne({emailid:req.body.emailid},{$set:{OTP:a}})
-//    .exec().then(result=>{
-//         res.status(200).send(result)
-//    })
-//    .catch(err=>{
-//         res.status(500).json({
-//             error : err
-//         })
-//    });
-// } 
- 
 
+
+// ================================#####FUNCTION#####===============================================================
 
 
 module.exports = router;

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Joi = require('joi');
-const {userSchema} = require('./users');
+// const {Events} = require('../modules/events')
+
 
 const Communities = mongoose.model('Communities',new mongoose.Schema({
     C_location: {
@@ -46,18 +47,78 @@ const Communities = mongoose.model('Communities',new mongoose.Schema({
         ref:'Events',
         default:null
     }],
-    followers:{
-        type:[mongoose.Schema.Types.ObjectId],
+    followers:[{
+        type:mongoose.Schema.Types.ObjectId,
         ref:'Users',
         default:null
-    }
-    // // attendee_ids:{
-// 
-    // },
-    // A_id:{
-    //     type: userSchema,
-    // }
-    
+    }],
+    C_OTP:{
+        type:String,
+        default:null
+    },
+    C_color:{
+        type:JSON,
+        color_0:{
+            type:Number,
+            validate:{
+                validator:function(v){
+                    return v>=0 && v<=5;
+                },
+                message:'Code number should be in between 0 to 5 inclusive.'
+            },
+            require:true        
+        },
+        color_1:{
+            type:Number,
+            validate:{
+                validator:function(v){
+                    return v>=0 && v<=5;
+                },
+                message:'Code number should be in between 0 to 5 inclusive.'
+            },
+            require:true    
+        },
+        color_2:{
+            type:Number,
+            validate:{
+                validator:function(v){
+                    return v>=0 && v<=5;
+                },
+                message:'Code number should be in between 0 to 5 inclusive.'
+            },
+            require:true    
+        },
+        color_3:{
+            type:Number,
+            validate:{
+                validator:function(v){
+                    return v>=0 && v<=5;
+                },
+                message:'Code number should be in between 0 to 5 inclusive.'
+            },
+            require:true    
+        },
+        color_4:{
+            type:Number,
+            validate:{
+                validator:function(v){
+                    return v>=0 && v<=5;
+                },
+                message:'Code number should be in between 0 to 5 inclusive.'
+            },
+            require:true    
+        },
+        color_5:{
+            type:Number,
+            validate:{
+                validator:function(v){
+                    return v>=0 && v<=5;
+                },
+                message:'Code number should be in between 0 to 5 inclusive.'
+            },
+            require:true    
+        }
+    },
 }));
 
 function validatecommunity(community) {

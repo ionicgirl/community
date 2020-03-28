@@ -86,11 +86,11 @@ const userSchema = new mongoose.Schema({
             require:true    
         }
     },
-   community_w:{
-        type:[mongoose.Schema.Types.ObjectId],
+   community_w:[{
+        type:mongoose.Schema.Types.ObjectId,
         ref :'Communities',
         default:null
-    },
+    }],
     interests:{
         type:String,
         // require:true,
@@ -98,16 +98,16 @@ const userSchema = new mongoose.Schema({
     location:{
         type:String,
     },
-    followers:{
-        type:[mongoose.Schema.Types.ObjectId],
+    followers:[{
+        type:mongoose.Schema.Types.ObjectId,
         ref:'Users',
         default:null
-    },
-    following:{
-        type:[mongoose.Schema.Types.ObjectId],
+    }],
+    following:[{
+        type:mongoose.Schema.Types.ObjectId,
         ref:'Users',
         default:null
-    }
+    }]
     // photo:{
     //     type:String
     // }

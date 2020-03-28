@@ -8,11 +8,7 @@ router.post('/login',async (req,res)=>{
     await Users.findOne({emailid:{$eq:req.body.emailid}})
     .exec()
     .then(result=>{
-        var colors = result;
-        console.log(colors.color);
-        var otp = pwd(colors.color);
-        // pwd(result.color);
-        res.status(200).send(result);
+        
     })
     .catch(err=>{
         res.status(500).json({
