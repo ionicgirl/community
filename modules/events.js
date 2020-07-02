@@ -5,6 +5,7 @@ const EventsSchema = new mongoose.Schema({
     C_id: {
         type :mongoose.Schema.Types.ObjectId,
         ref:'Communities',
+        required:true
     },
     E_name: {
         type : String,
@@ -14,12 +15,13 @@ const EventsSchema = new mongoose.Schema({
         type : String,
         required: true        
     },
-    // E_hostid:{
+    // E_hostid:{        
     //     type:String,
     //     required:true
     // },
     E_emailid:{
         type:String,
+        required:true
     },
     // E_details:{
     //     type:String,
@@ -34,22 +36,30 @@ const EventsSchema = new mongoose.Schema({
     //     required:true
     // },
     // E_contactno:{
-    //     type:String,
-       
+    //     type:String,       
     // },
-    // E_attendee:[{
-    //     type:mongoose.Schema.Types.ObjectId,
-        // ref:'Users',
-        // default:null
-    // }],
+    is_limited_slots:{
+            slots:{ 
+                type:Number,
+                default:0,
+                required:true
+            },
+            count:{
+                type:Number,
+                default:1,
+               
+            }
+    },
+    E_attendee:[{
+         type:mongoose.Schema.Types.ObjectId,
+         ref:'Users',
+         default:null
+         }],
     // E_paid:{
     //     type:Boolean,
     //     required:true
     // },
-    // E_status:{
-    //     type:Boolean,
-    //     required:true
-    // },
+   
 });
 
 const Events = mongoose.model('Events', EventsSchema);

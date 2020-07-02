@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-const userSchema = new mongoose.Schema({
+
+const Users = mongoose.model('Users',new mongoose.Schema({
     f_name: {
         type : String,
         required: true,        
@@ -91,9 +92,9 @@ const userSchema = new mongoose.Schema({
         ref :'Communities',
         default:null
     }],
-    interests:{
-        type:String,
-        // require:true,
+    U_interests:{
+        type:Array,
+        require:true,
     },
     location:{
         type:String,
@@ -107,43 +108,18 @@ const userSchema = new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:'Users',
         default:null
-    }]
-    // photo:{
-    //     type:String
-    // }
-});
+    }],
+    attended_events:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Events',
+        default:null
+    }],
+    enrolleded_events:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Events',
+        default:null
+    }],
+}));
 
-const Users = mongoose.model('User',userSchema)
-
-
-function pwd(x){
-    // console.log("passwd",x);
-    var a = Number(x.color_0);
-    var b = Number(x.color_1);
-    var c = Number(x.color_2);
-    var d = Number(x.color_3);
-    var e = Number(x.color_4);
-    var f = Number(x.color_5);
-    //  console.log('no. : ',a,b,c,d,e,f);
-
-    var pwdmatrix = new Array(6);
-    for (let i = 0; i < 6; i++) {
-            pwdmatrix[i] = [];
-            for (let j = 0; j < 6; j++) {
-                 pwdmatrix[i][j] = Math.floor(Math.random()*((5-0)+1)+0);
-            }
-            // System.out.print("\n");
-    }
-
-    //    console.log('final password:'+pwdmatrix[a][b]+pwdmatrix[c][d]+pwdmatrix[e][f]);
-       const O_T_P = `${pwdmatrix[a][b]}${pwdmatrix[c][d]}${pwdmatrix[e][f]}`;
-    //    console.log(O_T_P);
-       return O_T_P;
-    // }
-    // return (pwdmatrix[a][b]+pwdmatrix[c][d]+pwdmatrix[e][f]);
-}
-
-
-exports.userSchema = userSchema;
 exports.Users = Users;
-exports.pwd = pwd;
+

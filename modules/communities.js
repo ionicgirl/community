@@ -33,15 +33,10 @@ const Communities = mongoose.model('Communities',new mongoose.Schema({
     //     max:20,
     //     required:true
     // },
-    // C_interests:{
-    //     type:Array,
-    //     required:true
-    // },
-    // C_password:{
-    //     type:String,
-    //     required:true
-    // },
-    // event id
+    C_interests:{
+        type:Array,
+        required:true
+    },
     E_id:[{
         type:mongoose.Schema.Types.ObjectId,
         ref:'Events',

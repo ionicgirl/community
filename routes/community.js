@@ -2,11 +2,13 @@ const express = require('express');
 const router = express.Router();
 const {Communities} = require('../modules/communities');
 const {Users} = require('../modules/users');
-const {pwd} = require('../modules/users');
-const {Events} = require('../modules/events')
-// const jwt = require('jsonwebtoken')
-// const multer = require('multer');
-// const upload = multer({dest:'uploads/'});
+const {Events} = require('../modules/events');
+const {Admin} = require('../modules/Admin');
+const mongoose = require('mongoose');
+const AuthenticateUser = require('../middle-ware/check_auth');
+const JWT = require('jsonwebtoken');
+
+
 
 router.post('/signup',async (req,res)=>{
     await Communities.findOne({C_name:{$eq:req.body.C_name}})
@@ -14,13 +16,15 @@ router.post('/signup',async (req,res)=>{
         if(error)
             {
                 return res.status(500).json({
-                    message:'Error occure!!'
+                    message:'Error occure!!',
+                    Error:error
                 })  
             }
         if(result)
             {
                 return res.status(400).json({
-                    message:'Community already exsist!!'
+                    message:'Community already exsist!!',
+                    Result:result
                 })
             }
         else
@@ -37,20 +41,70 @@ router.post('/signup',async (req,res)=>{
                         color_3 :req.body.C_color.color_3,
                         color_4 :req.body.C_color.color_4,
                         color_5 :req.body.C_color.color_5,
-                    }
-        
+                    },
+                    C_interests:req.body.C_interests        
                 });
-                community.save();
-                res.status(200).json({
-                    message:'community enroll successfully.',
-                    result: community
-                });
+                community.save()
+                .then(async(succ)=>{
+                   await Admin.findOne({_id:req.body.admin})
+                   .then(async(resss)=>{
+                       var communities = community._id;
+                       console.log(communities);
+                       
+                        await Admin.updateOne({Admin_name: req.body.Admin_name}, {$push: {communities: communities}})
+                        .exec((eor,relt)=>{
+                            if(relt)
+                            {
+                                // return res.status(302).json({
+                                //         Result : relt,
+                                //         message: 'community added to admin side!!'
+                                // })
+                                console.log('community added to admin side!!',relt);
+                                
+                            }
+                            if(eor)
+                            {
+                                // return res.status(400).json({
+                                //         message:'community not added to admin side!!!',
+                                //         Error:eor
+                                // })
+                                console.log('community not added to admin side!!');
+                                
+                            }
+                    })
+                   })
+                    // .then(ressss=>{
+                    //     console.log
+                    //     res.status(201).json;({
+                    //         message:'Successfully added to admin',
+                    //         Result:ressss
+                    //     })
+                    // })
+                    // .catch(errrrr=>
+                    //     {
+                    //        res.status(500).json({
+                    //             Error : errrrr
+                    //         }
+                    //     );
+                    // }); 
+                    const token = JWT.sign({_id:community._id,C_emailid:community.C_emailid},process.env.JWT_PRIVATEKEY,{ expiresIn:"7d"});
+                    res.header('x-auth-token',token).status(200).json({
+                                    message :'User created successfully..',
+                                    Result : community
+                    });     
+                })
+                .catch(async(Fail)=>{
+                    res.status(500).json({
+                            Error : Fail
+                    });
+                });               
+               
             }
+        })
+    }
+);
 
-    })
-});
-
-router.post('/follower',async (req,res)=>{
+router.post('/follower',AuthenticateUser,async (req,res)=>{
 
     const cid = req.body.id;
     const New_user = req.body.U_id;
@@ -62,6 +116,7 @@ router.post('/follower',async (req,res)=>{
         }
         else
         {
+            
             await Users.findOne({_id:req.body.U_id}).exec(async (Err,Res)=>{
                 if(Res == [] || Res == null)
                 {
@@ -137,30 +192,6 @@ router.get('/:id',async (req,res)=>{
   
 });
 
-router.post('/login',async (req,res)=>{
-    await Communities.findOne({C_emailid:{$eq:req.body.C_emailid}})
-    .exec()
-    .then(result=>{
-        var colors = result;
-        console.log(colors.C_color);
-        const otp = pwd(colors.C_color);
-        console.log(otp);  
-        Communities.updateOne({C_emailid:req.body.C_emailid},{$set:{C_OTP:otp}}).exec();
-              
-         res.status(200).json({
-            message:result,
-            O_T_P: otp
-        });
-    })
-    .catch(err=>{
-        res.status(500).json({
-            message : 'user not found',
-            error : err
-        })
-    });
-});
-
-
 
 router.patch('/:id',async(req,res)=>{
     const id = req.params.id;
@@ -200,6 +231,12 @@ router.delete('/delete/:id',async(req,res)=>{
                     .exec(async (error,result)=>{
                         if(result)
                             {   
+                                const foll = result.followers;
+                                for (let i = 0; i < foll.length; i++) {
+                                        const element = foll[i];
+                                        delete_comm_user(element,C_id);                                    
+                                    }
+                                //  }
                                 events_delete(C_id); 
                                 // console.log("community deleted",result);
                                 return res.status(200).json({
@@ -227,7 +264,7 @@ router.delete('/delete/:id',async(req,res)=>{
                 
 });
 
-//===============================##### FUNCTIONS #####=======================================================================================
+//===============================##### FUNCTIONS #####=====================================================================
 
 
 async function events_delete(x) {
@@ -255,7 +292,7 @@ async function events_delete(x) {
       catch(error)  {
                         console.log(('not found!!!',error)); 
 
-        }      
+        }       
 }
 
 async function add_community_user(U_id,cid) {
@@ -271,6 +308,21 @@ async function add_community_user(U_id,cid) {
                 return console.log('community not added',e_rr);
             }
         })  
+}
+
+async function delete_comm_user(uid,cid){
+    await Users.updateOne({_id:uid},{$pull:{community_w:cid}})
+    .exec((error,result)=>{
+        if(result)
+        {
+            return console.log('community remove from user',result);
+        }
+        if(error)
+        {
+            return console.log('community can not remove from user',error);
+        }
+    })
+
 }
 
 

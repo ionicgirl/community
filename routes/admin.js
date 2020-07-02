@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const {Admin} = require('../modules/Admin');
-const {Users} = require('../modules/Users');
+// const {Users} = require('../modules/Users');
+
 const {Communities} = require('../modules/communities');
 const mongoose = require('mongoose');
 
@@ -9,8 +10,7 @@ const mongoose = require('mongoose');
 router.post('/signup',async (req,res)=>{
     let admin = new Admin({
         _id : mongoose.Types.ObjectId(),
-        communities: req.body.communities,
-        users: req.body.users,
+        Admin_name:req.body.Admin_name
       });
     await admin.save()
     .then(result=>{

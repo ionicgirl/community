@@ -1,21 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const {Events} = require('../modules/events');
-const {Communities} = require('../modules/communities')
+const {Communities} = require('../modules/communities');
+const {Users} = require('../modules/users');
 const mongoose = require('mongoose');
 
 
-router.post('/signup',async (req,res)=>{
-    // const new_Cid = req.body.C_id;
-    // const new_ename = req.body.E_name;
+
+router.post('/create',async (req,res)=>{
     await Events.findOne({$and:[{C_id:{$eq:req.body.C_id},E_name:{$eq:req.body.E_name}}]})
     .exec((error,result)=>{
         if(result)
+            {
                 return res.status(500).json({
-                        error:{
-                                message :'event already exist'
-                            }
+                    error:{
+                            message :'event already exist'
+                    }
                 })
+            }
         else
                 {
                     const event = new Events({
@@ -24,10 +26,15 @@ router.post('/signup',async (req,res)=>{
                         E_name: req.body.E_name,
                         E_location: req.body.E_location,
                         E_emailid: req.body.E_emailid,
-        
+                        is_limited_slots:{
+                            slots : req.body.is_limited_slots.slots,
+                            count : req.body.is_limited_slots.slots
+                        },
+                        
+                        // E_attendee:req.body.E_attendee
                     });
-                    event.save();
-                    update_event_com(event.C_id,event._id)
+                    event.save();                    
+                    update_event_com(event.C_id,event._id);
                     res.status(200).json({
                         message:'successfully added to Event',
                         Newevent : event
@@ -37,9 +44,136 @@ router.post('/signup',async (req,res)=>{
        
 });
 
-router.get('/',async (req,res)=>{
-    await Events.find().exec()
-    // .populate('C_id')
+router.post('/attendee',async (req,res)=>{
+    const eid = req.body.id;
+    const uid = req.body.uid;
+    await Events.findOne({_id:req.body.id}).exec(async(error,result)=>{
+        if(result == [] || result == null)
+        {
+            return res.status(500).json({
+                message:'event does not exist!!!'
+            });
+        }
+        if(error)
+        {
+            return res.status(500).json({
+                message:'error occure while finding event!!!'
+            });
+        }
+        else
+        {   //console.log("result event:",result); 
+        
+            if(result.is_limited_slots.slots)
+            {
+                if(result.is_limited_slots.count)
+                {
+                    await Users.findOne({_id:req.body.uid})
+                    .exec(async(err,resul_t)=>{
+                        if(resul_t==[]||resul_t==null)
+                        {
+                            return res.status(500).json({
+                                message:'user not found..'
+                            });
+                        }
+                        if(err)
+                        {
+                            return res.status(500).json({
+                                message:'error occure while finding user!!!'
+                            });
+                        }
+                        else
+                        {
+                            await Events.findOne({$and:[{ _id : eid , E_attendee : uid }]})
+                            .exec(async(E,R)=>{
+                                    if(R == [] || R == null)
+                                    {
+                                        await Events.updateOne({_id:eid},{$push:{E_attendee:uid}})
+                                        .exec(async(error,result)=>{
+                                            if(result)
+                                            {
+                                                add_event_touser(eid,uid)
+                                                console.log('attendee enrolled:',result);
+                                                await Events.findOneAndUpdate({_id:eid},{$inc: {'is_limited_slots.count' : -1 } },{new:true})
+                                                .exec(async(ER,RE)=>{
+                                                    if(RE)
+                                                    {
+                                                        return res.status(200).json({
+                                                                    message:'count has been increased'
+                                                        })
+                                       
+                                                    }
+                                                    if(ER)
+                                                    {
+                                                        return res.status(200).json({
+                                                                    message:'Error occure while increasing count'
+                                                        })                                  
+                                                    }
+                                                });
+                                            }
+                                            if(error)
+                                            {
+                                                return res.status(500).json({
+                                                    message:'error occure while enrolling user!!!',
+                                                    Error :error 
+                                                })
+                                            }
+                                        })       
+                                    }
+                                    if(R)
+                                    {
+                                        return res.status(200).json({
+                                                message:'user already present'
+                                            });
+                                    }
+                                    if(E)
+                                    {
+                                        return res.status(200).json({
+                                            message:'error occure while enrolling user to event'
+                                        });
+                                    }
+                            });                   
+                        }
+                    })
+                }
+                else
+                {   
+                    await Events.updateOne({_id:eid},{$push:{E_attendee:uid}})
+                    .exec(async(error,result)=>{
+                            if(result)
+                            {
+                                add_event_touser(eid,uid)
+                                console.log('attendee enrolled:',result);
+                            }
+                            if(error)
+                            {
+                                return res.status(500).json({
+                                        message:'error occure while enrolling user!!!',
+                                        Error :error 
+                                })
+                            }
+                    });
+                    return res.status(200).json({
+                        message:'slots are not available!!'
+                    });
+                }
+            }
+            else
+            {
+                
+                return res.status(200).json({
+                    message:'Unlimited slots are available'
+                })
+            }
+        }
+        
+    })
+});
+
+
+
+router.get('/:id',async (req,res)=>{
+    await Events.find({_id:req.params.id}).exec()
+     .populate('C_id')
     .then(result=>{
         res.status(200).json({
             Result:result,
@@ -47,7 +181,10 @@ router.get('/',async (req,res)=>{
         })
     })
     .catch(error=>
-        {res.status(500).json({Error : error,message:'not found!!'})
+        {
+            res.status(500).json({
+                Error : error,message:'not found!!'
+            })
     });   
 });
 
@@ -114,9 +251,7 @@ router.delete('/delete/:id',async(req,res)=>{
 
 
 
-// ==========================#####FUNCTION#####=======================================================================
-
-
+//=====================================#####FUNCTION#####=======================================================
 async function update_event_com(x,y) {
     console.log('in function',x,'....',y);
     try {
@@ -143,8 +278,37 @@ async function del_event_com(c,e) {
        
 }
 
-module.exports = router;
 
+
+async function add_event_touser(eid,uid){
+    await Users.findOne({_id:uid}).exec(async(error,result)=>{
+        if(result==[]||result==null)
+        {
+            return console.log('============user not found!!');
+        }
+        if(error)
+        {
+            return console.log('error occure while finding user!!',error);
+        }
+        else
+        {
+            await Users.updateOne({_id :uid},{$push: {enrolleded_events: eid}})
+            .exec(async (e,r)=>{
+                if(r)
+                {
+                    return console.log('enrolled event added to user',r);
+                }
+                if(e)
+                {
+                    return console.log('enrolled event can not be added to user',e);
+                }  
+            });
+        }
+    })
+}
+
+module.exports = router;
+// #################################################################################################################
             // E_hostid:req.body.E_host,
             // E_details:req.body.E_details,
             // E_date:req.body.E_date,
