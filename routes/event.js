@@ -30,8 +30,6 @@ router.post('/create',async (req,res)=>{
                             slots : req.body.is_limited_slots.slots,
                             count : req.body.is_limited_slots.slots
                         },
-                        
-                        // E_attendee:req.body.E_attendee
                     });
                     event.save();                    
                     update_event_com(event.C_id,event._id);
@@ -61,8 +59,7 @@ router.post('/attendee',async (req,res)=>{
             });
         }
         else
-        {   //console.log("result event:",result); 
-        
+        {        
             if(result.is_limited_slots.slots)
             {
                 if(result.is_limited_slots.count)
@@ -85,64 +82,77 @@ router.post('/attendee',async (req,res)=>{
                         {
                             await Events.findOne({$and:[{ _id : eid , E_attendee : uid }]})
                             .exec(async(E,R)=>{
-                                    if(R == [] || R == null)
-                                    {
-                                        await Events.updateOne({_id:eid},{$push:{E_attendee:uid}})
-                                        .exec(async(error,result)=>{
-                                            if(result)
-                                            {
-                                                add_event_touser(eid,uid)
-                                                console.log('attendee enrolled:',result);
-                                                await Events.findOneAndUpdate({_id:eid},{$inc: {'is_limited_slots.count' : -1 } },{new:true})
-                                                .exec(async(ER,RE)=>{
-                                                    if(RE)
-                                                    {
-                                                        return res.status(200).json({
-                                                                    message:'count has been increased'
-                                                        })
-                                       
-                                                    }
-                                                    if(ER)
-                                                    {
-                                                        return res.status(200).json({
-                                                                    message:'Error occure while increasing count'
-                                                        })                                  
-                                                    }
-                                                });
-                                            }
-                                            if(error)
-                                            {
-                                                return res.status(500).json({
-                                                    message:'error occure while enrolling user!!!',
-                                                    Error :error 
-                                                })
-                                            }
-                                        })       
-                                    }
-                                    if(R)
-                                    {
-                                        return res.status(200).json({
-                                                message:'user already present'
+                                if(R == [] || R == null)
+                                {
+                                    await Events.updateOne({_id:eid},{$push:{E_attendee:uid}})
+                                    .exec(async(error,result)=>{
+                                        if(result)
+                                        {
+                                            add_event_touser(eid,uid);
+                                            console.log('attendee enrolled:',result);
+                                            await Events.findOneAndUpdate({_id:eid},{$inc: {'is_limited_slots.count' : -1 } },{new:true})
+                                            .exec(async(ER,RE)=>{
+                                                if(RE)
+                                                {
+                                                    return res.status(200).json({
+                                                                message:'count has been increased'
+                                                    });                                    
+                                                }
+                                                if(ER)
+                                                {
+                                                    return res.status(200).json({
+                                                                message:'Error occure while increasing count'
+                                                    });                               
+                                                }
                                             });
-                                    }
-                                    if(E)
-                                    {
-                                        return res.status(200).json({
-                                            message:'error occure while enrolling user to event'
+                                        }
+                                        if(error)
+                                        {
+                                            return res.status(500).json({
+                                                message:'error occure while enrolling user!!!',
+                                                Error :error 
+                                            })
+                                        }
+                                    })       
+                                }
+                                if(R)
+                                {
+                                    return res.status(200).json({
+                                            message:'user already present'
                                         });
-                                    }
+                                }
+                                if(E)
+                                {
+                                    return res.status(200).json({
+                                        message:'error occure while enrolling user to event'
+                                    });
+                                }
                             });                   
                         }
                     })
                 }
                 else
                 {   
-                    await Events.updateOne({_id:eid},{$push:{E_attendee:uid}})
-                    .exec(async(error,result)=>{
+                    return res.status(200).json({
+                        message:'slots are not available!!'
+                    });
+                }
+            }
+            else
+            {          
+                await Events.findOne({$and:[{ _id : eid , E_attendee : uid }]})
+                .exec(async(E,R)=>{
+                    if(R == [] || R == null)
+                    {
+                        await Events.updateOne({_id:eid},{$push:{E_attendee:uid}})
+                        .exec(async(error,result)=>{
                             if(result)
                             {
                                 add_event_touser(eid,uid)
-                                console.log('attendee enrolled:',result);
+                                return res.status(200).json({
+                                    message:'Unlimited slots are available',
+                                    result : result
+                                })
                             }
                             if(error)
                             {
@@ -151,21 +161,23 @@ router.post('/attendee',async (req,res)=>{
                                         Error :error 
                                 })
                             }
-                    });
-                    return res.status(200).json({
-                        message:'slots are not available!!'
-                    });
-                }
+                        });                        
+                    }
+                    if(R)
+                    {
+                        return res.status(200).json({
+                                message:'user already present'
+                            });
+                    }
+                    if(E)
+                    {
+                        return res.status(200).json({
+                            message:'error occure while enrolling user to event'
+                        });
+                    }
+                });
             }
-            else
-            {
-                
-                return res.status(200).json({
-                    message:'Unlimited slots are available'
-                })
-            }
-        }
-        
+        }        
     })
 });
 
@@ -188,7 +200,7 @@ router.get('/:id',async (req,res)=>{
     });   
 });
 
-router.patch('/:id',async(req,res)=>{
+router.patch('/update/:id',async(req,res)=>{
     const id = req.params.id;
     const updateOps = {};
     for(const ops of req.body){

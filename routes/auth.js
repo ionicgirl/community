@@ -59,7 +59,6 @@ router.post('/user/login_fist_step',async (req,res)=>{
                     
                 }
             });
-            console.log("results:===",results);        
              res.status(200).json({
                 AllData: results,
                 Matrix:matrix,
@@ -139,6 +138,7 @@ router.post('/community/login_fist_step',async (req,res)=>{
                     ++l;
                 }
             }
+
             const O_T_P = `${pwdmatrix[a][b]}${pwdmatrix[c][d]}${pwdmatrix[e][f]}`;
 
             for (i in matrix)
@@ -168,7 +168,7 @@ router.post('/community/login_fist_step',async (req,res)=>{
 });
 
 router.post('/community/login_second_step',async(req,res)=>{
-    await Communities.findOne({$and:[{C_emailid:{$eq:req.body.C_emailid},C_OTP:{$eq:req.body.C_O_T_P}}]}).exec((err,succ)=>{
+    await Communities.findOne({$and:[{C_emailid:{$eq:req.body.C_emailid},C_OTP:{$eq:req.body.C_OTP}}]}).exec((err,succ)=>{
         if(err)
         {
             return res.status(500).json({

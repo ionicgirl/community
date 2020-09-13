@@ -7,6 +7,7 @@ const {Admin} = require('../modules/Admin');
 const mongoose = require('mongoose');
 const AuthenticateUser = require('../middle-ware/check_auth');
 const JWT = require('jsonwebtoken');
+const { result } = require('lodash');
 
 
 
@@ -34,6 +35,9 @@ router.post('/signup',async (req,res)=>{
                     C_name:req.body.C_name,
                     C_emailid : req.body.C_emailid,
                     C_phone : req.body.C_phone,
+                    C_description:req.body.C_description,
+                    C_organizer:req.body.C_organizer,
+                    C_interests:[req.body.C_interests],
                     C_color:{
                         color_0 :req.body.C_color.color_0,
                         color_1 :req.body.C_color.color_1,
@@ -104,7 +108,7 @@ router.post('/signup',async (req,res)=>{
     }
 );
 
-router.post('/follower',AuthenticateUser,async (req,res)=>{
+router.post('/follower',async (req,res)=>{
 
     const cid = req.body.id;
     const New_user = req.body.U_id;
@@ -153,8 +157,7 @@ router.post('/follower',AuthenticateUser,async (req,res)=>{
                             }
                     })
                 }
-            })
-            
+            })            
         }
         if(Err_or)   
         {
@@ -162,10 +165,8 @@ router.post('/follower',AuthenticateUser,async (req,res)=>{
                 message:'not found!!!',
                 Error:error
             }) 
-        }
-        
-    })
-    
+        }        
+    })    
 });
 
 
@@ -187,13 +188,39 @@ router.get('/:id',async (req,res)=>{
                 message:'not found'
             })  
         }    
-    })
-   
-  
+    }) 
 });
 
 
-router.patch('/:id',async(req,res)=>{
+router.post('/Events',async(req,res)=>{
+    await Communities.findOne({_id:req.body.id})
+    .populate('E_id')
+    .exec((err,ans)=>{
+        if(ans == [] || ans == null )
+            {  
+                // console.log(Resul_t.length);
+                return res.status(500).json({
+                    message:'community Not found!!',
+                }) 
+            }
+        else{
+            res.status(200).json(
+                { 
+                    message:'found',
+                    Result:ans.E_id
+                });
+            
+        }
+        if(err){
+            return res.status(500).json({
+                message:'Error occur',
+                Error:error
+            });  
+        }
+    })
+});
+
+router.patch('/update/:id',async(req,res)=>{
     const id = req.params.id;
     const updateOps = {};
     for(const ops of req.body){
@@ -202,10 +229,8 @@ router.patch('/:id',async(req,res)=>{
     const community = await Communities.update({_id:id},{$set : updateOps})
     .exec()
     .then(result=>{
-        // console.log(result);
         res.status(202).send(result);        
     }).catch(error=>{
-        // console.log(error);
         res.status(500).json({Error:error});
     });
 

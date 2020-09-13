@@ -1,13 +1,7 @@
 const mongoose = require('mongoose');
 const Joi = require('joi');
-// const {Events} = require('../modules/events')
-
 
 const Communities = mongoose.model('Communities',new mongoose.Schema({
-    C_location: {
-        type : String,
-        required: true        
-    },
     C_name:{
         type:String,
         required:true
@@ -21,18 +15,22 @@ const Communities = mongoose.model('Communities',new mongoose.Schema({
         type:Number,
         required:true
     },
-    // C_description:{
-    //     type:String,
-    //     min:10,
-    //     max:100,
-    //     required:true
-    // },
-    // C_head:{
-    //     type:String,
-    //     min:5,
-    //     max:20,
-    //     required:true
-    // },
+    C_description:{
+        type:String,
+        min:10,
+        max:100,
+        required:true
+    },
+    C_location: {
+        type : String,
+        required: true        
+    },
+    C_organizer:{
+        type:String,
+        min:5,
+        max:20,
+        required:true
+    },
     C_interests:{
         type:Array,
         required:true
@@ -57,7 +55,7 @@ const Communities = mongoose.model('Communities',new mongoose.Schema({
             type:Number,
             validate:{
                 validator:function(v){
-                    return v>=0 && v<=5;
+                    return v >= 0 && v <= 5;
                 },
                 message:'Code number should be in between 0 to 5 inclusive.'
             },
@@ -114,6 +112,10 @@ const Communities = mongoose.model('Communities',new mongoose.Schema({
             require:true    
         }
     },
+    C_created:{
+        type:Date,
+        default:Date.now
+    }
 }));
 
 function validatecommunity(community) {
